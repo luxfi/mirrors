@@ -1,0 +1,57 @@
+name: mirror
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *'
+
+permissions:
+  packages: write
+  contents: read
+
+jobs:
+  mirror:
+    runs-on: lux-build-linux-amd64
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - billing
+          - commerce
+          - console
+          - cloud
+          - cloud-api
+          - ingress
+          - id
+          - insights
+          - iam
+          - kms
+    steps:
+      - name: Install skopeo
+        run: |
+          if ! command -v skopeo >/dev/null 2>&1; then
+            apt-get update && apt-get install -y --no-install-recommends skopeo ca-certificates
+          fi
+
+      - name: Login to ghcr.io (hanzoai pull)
+        env:
+          HANZOAI_PULL_TOKEN: ${{ secrets.HANZOAI_PULL_TOKEN }}
+        run: |
+          echo "$HANZOAI_PULL_TOKEN" | skopeo login ghcr.io --username hanzo-dev --password-stdin
+
+      - name: Login to ghcr.io (luxfi push)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GH_TOKEN" | skopeo login ghcr.io --username "${{ github.actor }}" --password-stdin
+
+      - name: Mirror ${{ matrix.image }} (multi-arch)
+        run: |
+          SRC="docker://ghcr.io/hanzoai/${{ matrix.image }}:latest"
+          DST="docker://ghcr.io/luxfi/${{ matrix.image }}:latest"
+          echo "Mirroring $SRC -> $DST (all archs)"
+          skopeo copy --all --retry-times 3 "$SRC" "$DST"
+
+      - name: Verify
+        run: |
+          skopeo inspect "docker://ghcr.io/luxfi/${{ matrix.image }}:latest" | head -20
