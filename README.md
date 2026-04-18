@@ -10,26 +10,24 @@ Runs on the self-hosted `lux-build-linux-amd64` runner in the luxfi org.
 
 ## Mirrored images
 
-| Image | Source | Destination |
-|-------|--------|-------------|
-| billing | `ghcr.io/hanzoai/billing:latest` | `ghcr.io/luxfi/billing:latest` |
-| commerce | `ghcr.io/hanzoai/commerce:latest` | `ghcr.io/luxfi/commerce:latest` |
-| console | `ghcr.io/hanzoai/console:latest` | `ghcr.io/luxfi/console:latest` |
-| cloud | `ghcr.io/hanzoai/cloud:latest` | `ghcr.io/luxfi/cloud:latest` |
-| cloud-api | `ghcr.io/hanzoai/cloud-api:latest` | `ghcr.io/luxfi/cloud-api:latest` |
-| ingress | `ghcr.io/hanzoai/ingress:latest` | `ghcr.io/luxfi/ingress:latest` |
-| id | `ghcr.io/hanzoai/id:latest` | `ghcr.io/luxfi/id:latest` |
-| insights | `ghcr.io/hanzoai/insights:latest` | `ghcr.io/luxfi/insights:latest` |
-| iam | `ghcr.io/hanzoai/iam:latest` | `ghcr.io/luxfi/iam:latest` |
-| kms | `ghcr.io/hanzoai/kms:latest` | `ghcr.io/luxfi/kms:latest` |
+| Source (hanzoai) | Destination (luxfi) |
+|------------------|---------------------|
+| `ghcr.io/hanzoai/billing:latest` | `ghcr.io/luxfi/billing:latest` |
+| `ghcr.io/hanzoai/commerce:latest` | `ghcr.io/luxfi/commerce:latest` |
+| `ghcr.io/hanzoai/console:latest` | `ghcr.io/luxfi/console:latest` |
+| `ghcr.io/hanzoai/cloud-site:latest` | `ghcr.io/luxfi/cloud:latest` (frontend SPA) |
+| `ghcr.io/hanzoai/cloud:latest` | `ghcr.io/luxfi/cloud-api:latest` (backend API) |
+| `ghcr.io/hanzoai/ingress:latest` | `ghcr.io/luxfi/ingress:latest` |
+| `ghcr.io/hanzoai/id:latest` | `ghcr.io/luxfi/id:latest` |
+| `ghcr.io/hanzoai/insights:latest` | `ghcr.io/luxfi/insights:latest` |
+| `ghcr.io/hanzoai/iam:latest` | `ghcr.io/luxfi/iam:latest` |
+| `ghcr.io/hanzoai/kms:latest` | `ghcr.io/luxfi/kms:latest` |
 
 ## Required secrets
 
 Set on this repo (`luxfi/mirrors`) under Settings -> Secrets and variables -> Actions:
 
-- `HANZOAI_PULL_TOKEN` -- PAT with `read:packages` scope on `hanzoai` org. Used to pull from `ghcr.io/hanzoai/*`.
-
-The built-in `GITHUB_TOKEN` handles push to `ghcr.io/luxfi/*` (has `packages:write` via workflow permissions).
+- `HANZOAI_PULL_TOKEN` -- PAT owned by `hanzo-dev` with `read:packages` on `hanzoai` AND `write:packages` on `luxfi`. `hanzo-dev` is an org admin on both, so a single PAT handles both pull and push. (Docker credstore only supports one cred per registry host, so both operations must use the same credential.)
 
 ## Trigger manually
 
