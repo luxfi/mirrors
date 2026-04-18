@@ -27,31 +27,37 @@ jobs:
           - iam
           - kms
     steps:
-      - name: Install skopeo
+      - name: Install crane
         run: |
-          if ! command -v skopeo >/dev/null 2>&1; then
-            apt-get update && apt-get install -y --no-install-recommends skopeo ca-certificates
+          mkdir -p "$HOME/bin"
+          if ! [ -x "$HOME/bin/crane" ]; then
+            curl -fsSL https://github.com/google/go-containerregistry/releases/download/v0.20.2/go-containerregistry_Linux_x86_64.tar.gz \
+              | tar -xz -C "$HOME/bin" crane
+            chmod +x "$HOME/bin/crane"
           fi
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+          "$HOME/bin/crane" version
 
       - name: Login to ghcr.io (hanzoai pull)
         env:
           HANZOAI_PULL_TOKEN: ${{ secrets.HANZOAI_PULL_TOKEN }}
         run: |
-          echo "$HANZOAI_PULL_TOKEN" | skopeo login ghcr.io --username hanzo-dev --password-stdin
+          echo "$HANZOAI_PULL_TOKEN" | crane auth login ghcr.io -u hanzo-dev --password-stdin
 
       - name: Login to ghcr.io (luxfi push)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "$GH_TOKEN" | skopeo login ghcr.io --username "${{ github.actor }}" --password-stdin
+          echo "$GH_TOKEN" | crane auth login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: Mirror ${{ matrix.image }} (multi-arch)
         run: |
-          SRC="docker://ghcr.io/hanzoai/${{ matrix.image }}:latest"
-          DST="docker://ghcr.io/luxfi/${{ matrix.image }}:latest"
+          SRC="ghcr.io/hanzoai/${{ matrix.image }}:latest"
+          DST="ghcr.io/luxfi/${{ matrix.image }}:latest"
           echo "Mirroring $SRC -> $DST (all archs)"
-          skopeo copy --all --retry-times 3 "$SRC" "$DST"
+          crane copy "$SRC" "$DST"
 
       - name: Verify
         run: |
-          skopeo inspect "docker://ghcr.io/luxfi/${{ matrix.image }}:latest" | head -20
+          crane digest "ghcr.io/luxfi/${{ matrix.image }}:latest"
+          crane manifest "ghcr.io/luxfi/${{ matrix.image }}:latest" | head -40
