@@ -1,0 +1,32 @@
+Cloudflare DNS records for lux.cloud — REQUIRES MANUAL ADDITION
+===============================================================
+
+Zone: lux.cloud
+LoadBalancer IP: 164.90.246.124
+Cluster: do-sfo3-lux-k8s (namespace: hanzo)
+Service: hanzo-ingress (type: LoadBalancer)
+
+Records to add (Cloudflare dashboard or API with edit scope):
+
+  Type   Name           Content          Proxy   TTL
+  ----   ----           -------          -----   ---
+  A      lux.cloud      164.90.246.124   on      Auto
+  A      *.lux.cloud    164.90.246.124   on      Auto
+
+Notes:
+  - Current CF API token scope is list-only; edit requires a token with
+    Zone:DNS:Edit on the lux.cloud zone.
+  - Suggested subdomains served by Traefik on hanzo-ingress (verify via IngressRoute CRDs):
+      lux.cloud              -> cloud (frontend SPA)
+      api.lux.cloud          -> cloud-api (backend)
+      id.lux.cloud           -> hanzo-login (OIDC)
+      iam.lux.cloud          -> iam
+      kms.lux.cloud          -> kms
+      commerce.lux.cloud     -> commerce
+      billing.lux.cloud      -> billing
+      console.lux.cloud      -> console
+      insights.lux.cloud     -> insights-web
+
+Verification after DNS propagation:
+  dig +short lux.cloud
+  curl -I https://lux.cloud
